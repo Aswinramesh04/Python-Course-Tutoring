@@ -1,71 +1,60 @@
-from product import Product
-from cart import Cart
 import streamlit as st
+from bank_account import BankAccount
 
-# Function to display product details
-def add_to_cart(product, quantity):
+#session_state
+if 'accounts' not in st.session_state:
+    st.session_state['accounts'] = {}
 
-    cart.add_item(product, quantity)
-    st.success(f"{quantity} {product.name} added to cart!")
 
-# Function to display cart details
-def show_cart():
-    st.header("Your Cart")
-    for item in cart.items:
-        st.write(f"{item['quantity']} * {item['product'].name} - {item['product'].price} each")
 
-    total_price = cart.calculate_total_price()
-    if cart.free_delivery():
-        st.write(f"Total Price: {total_price} (Free Delivery)")
+def create_account():
+    name = st.text_input("Enter your name:")
+    account_number = st.number_input("Enter your account number:")
+
+    if name and account_number:
+        if account_number not in st.session_state['accounts']:
+            st.session_state['accounts'][account_number] = BankAccount(name, account_number)
+            st.success("Account created Successfully.")
+        else:
+            st.error("Account already exists.")
+
+def select_account():
+    account_options = list(st.session_state['accounts'].keys())
+    if account_options:
+        selected_account_number = st.selectbox("Select your account:",account_options)
+        return st.session_state['accounts'][selected_account_number]
     else:
-        st.write(f"Total Price: {total_price} (+ 50 Delivery Charge if total < 1000)")
-    st.write(f"Tax (18%): {cart.tax()}")
-    st.write(f"Final Price: {cart.final_price():.2f}")
+        st.warning("No account found.")
+        return None
 
 
-# Main Streamlit UI
+def main():
+    st.title("My Bank")
+    menu = ["Create Account", "Manage Account"]
+    choice = st.sidebar.selectbox("Menu", menu)
+
+    if choice == "Create Account":
+        create_account()
+
+    elif choice == "Manage Account":
+        selected_account = select_account()
+        if selected_account:
+            st.subheader(f"Welcome, {selected_account.name}!!!!!")
+            services = st.selectbox("Select Services:", ["Deposit", "Withdraw", "Check Balance"])
+
+            if services == "Deposit":
+                deposit_amount = st.number_input("Enter amount to deposit:")
+                if deposit_amount > 0:
+                    st.write(selected_account.deposit(deposit_amount))
+
+            elif services == "Withdraw":
+                withdraw_amount = st.number_input("Enter amount to withdraw:")
+                if withdraw_amount > 0:
+                    st.write(selected_account.withdraw(withdraw_amount))
+
+            elif services == "Check Balance":
+                st.write(selected_account.check_balance())
+
+
 if __name__ == "__main__":
-    st.title("Online Shopping E-commerce Shop")
-
-    cart = Cart()
-
-    # Adding Products
-    products = [
-        Product("Laptop", 800),
-        Product("Headphones", 50),
-        Product("Mouse", 20),
-        Product("Keyboard", 50)
-    ]
-
-    st.header("Products")
-    for product in products:
-        col1, col2 = st.columns([1, 3])
-        quantity = col1.number_input(f"Quantity for {product.name}", min_value=0, step=1, value=0)
-        if quantity > 0:
-            add_to_cart(product, quantity)
-        with col2:
-            st.write(f"!!!{product.name}!!!\nPrice: {product.price}")
-
-    # Display Cart
-    show_cart()
-
-
-
-
-
-# shopping cart
-
-
-# main
-# connecting both files
-# product
-# #product , quantity, price
-#
-# cart
-# total price
-# discount
-# free delivery tax
-
-
-#adding to the cart -
-# product, quantity
+    main()
